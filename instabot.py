@@ -1,14 +1,13 @@
-import requests
+import requests,urllib
 
 
-global APP_ACCESS_TOKEN
+global APP_ACCESS_TOKEN,BASE_URL
 APP_ACCESS_TOKEN='5689237295.0705f6a.21cd24d2701a46a5a625358c35071320'
-global BASE_URL
 BASE_URL='https://api.instagram.com/v1/'
 
 
 #function to fetch user's details
-# https://api.instagram.com/v1/users/{user-id}/?access_token=ACCESS-TOKEN
+
 def self_info():
   request_url=BASE_URL+'users/self/?access_token=%s' % (APP_ACCESS_TOKEN)
   print 'GET request url : %s' % (request_url)
@@ -28,8 +27,8 @@ def self_info():
   else:
       print 'Status code other than 200 received'
 
-# function to fetch another user's details
-# https://api.instagram.com/v1/users/search?q=jack&access_token=ACCESS-TOKEN
+# function to get user id from username
+
 def get_user_id(username):
   request_url=BASE_URL+'users/search?q=%s&access_token=%s' % (username,APP_ACCESS_TOKEN)
   user_info = requests.get(request_url).json()
@@ -44,7 +43,7 @@ def get_user_id(username):
 
 
 #function to fetch details of another user
-# https://api.instagram.com/v1/users/{user-id}/?access_token=ACCESS-TOKEN
+
 def another_user_detail(username):
   if username==None:
     print "Entered username is invalid"
@@ -72,9 +71,203 @@ def another_user_detail(username):
 
 
 
+#function to download user recent post
+
+def user_recent_post():
+  request_url=BASE_URL+'users/self/media/recent/?access_token=%s' %(APP_ACCESS_TOKEN)
+  print 'GET request url : %s' % (request_url)
+  user_media = requests.get(request_url).json()
+  if user_media['meta']['code'] == 200:
+    if len(user_media['data']):
+      image_name = user_media['data'][0]['id'] + '.jpeg'
+      image_url = user_media['data'][0]['images']['standard_resolution']['url']
+      urllib.urlretrieve(image_url, image_name)
+      print 'Your image has been downloaded! and image id is %s' %(user_media['data'][0]['id'])
+    else:
+      print 'Post does not exist!'
+  else:
+    print 'Status code other than 200 received!'
+
+# function to get media id from username
+def get_media_id(username):
+  user_id=get_user_id(username)
+  request_url=BASE_URL+'users/%s/media/recent/?access_token=%s'%(user_id,APP_ACCESS_TOKEN)
+  user_media = requests.get(request_url).json()
+  if user_media['meta']['code'] == 200:
+    if len(user_media['data']):
+      return user_media['data'][0]['id']
+    else:
+      print 'No recent post'
+      exit()
+  else:
+    print 'Status code other than 200 received!'
+    exit()
+
+#downloads recent media of a user (self)
+def user_recent_media(username):
+  user_id=get_user_id(username)
+  if user_id==None:
+    print "No such user exists"
+  else:
+    request_url = BASE_URL + 'users/%s/media/recent/?access_token=%s' % (user_id, APP_ACCESS_TOKEN)
+    user_media = requests.get(request_url).json()
+    if user_media['meta']['code'] == 200:
+      if len(user_media['data']):
+        image_name = user_media['data'][0]['id'] + '.jpeg'
+        image_url = user_media['data'][0]['images']['standard_resolution']['url']
+        urllib.urlretrieve(image_url, image_name)
+        print 'Your image has been downloaded! and image id is %s' % (user_media['data'][0]['id'])
+      else:
+        print 'Post does not exist!'
+    else:
+      print 'Status code other than 200 received!'
+
+
+# downloads recent media liked by a user
+def recent_media_liked():
+  request_url = BASE_URL + 'users/self/media/liked/?access_token=%s' % (APP_ACCESS_TOKEN)
+  print 'GET request url : %s' % (request_url)
+  user_media = requests.get(request_url).json()
+  if user_media['meta']['code'] == 200:
+    if len(user_media['data']):
+      image_name = user_media['data'][0]['id'] + '.jpeg'
+      image_url = user_media['data'][0]['images']['standard_resolution']['url']
+      urllib.urlretrieve(image_url, image_name)
+      print 'Your image has been downloaded! and image id is %s' % (user_media['data'][0]['id'])
+    else:
+      print 'Post does not exist!'
+  else:
+    print 'Status code other than 200 received!'
+
+
+def like_a_post(username):
+    media_id = get_media_id(username)
+    request_url = (BASE_URL + 'media/%s/likes') % (media_id)
+    payload = {"access_token": APP_ACCESS_TOKEN}
+    print 'POST request url : %s' % (request_url)
+    post_a_like = requests.post(request_url, payload).json()
+    if post_a_like['meta']['code'] == 200:
+        print 'Like was successful!'
+    else:
+      print 'Your like was unsuccessful. Try again!'
 
 
 
+#generates list of comments
+def get_comments_list(username):
+  media_id=get_media_id(username)
+  if media_id==None:
+    print "Post does not exist"
+    exit()
+  else:
+    request_url=BASE_URL+'media/%s/comments?access_token=%s' %(media_id,APP_ACCESS_TOKEN)
+    user_comment = requests.get(request_url).json()
+    if user_comment['meta']['code']==200:
+      if len(user_comment['data']):
+
+        length=len(user_comment['data'])
+        i=0
+        while(length):
+            print "comment:%d %s" % (i+1,user_comment['data'][i]['text'])
+            i=i+1
+            length=length-1
+      else:
+        print 'no comments'
+    else:
+      print 'Status code other than 200 received!'
+
+
+
+#generates list of the people who have liked the media
+def people_list(username):
+  media_id = get_media_id(username)
+  if media_id == None:
+    print "Post does not exist"
+    exit()
+  else:
+    request_url = BASE_URL + 'media/%s/likes?access_token=%s' % (media_id, APP_ACCESS_TOKEN)
+    likes = requests.get(request_url).json()
+    if likes['meta']['code'] == 200:
+      if len(likes['data']):
+
+        length = len(likes['data'])
+        i = 0
+        print "Total no of likes %s" %(length)
+        while (length):
+          print "username:%d %s" % (i + 1, likes['data'][i]['username'])
+          i = i + 1
+          length = length - 1
+      else:
+        print 'no comments'
+    else:
+      print 'Status code other than 200 received!'
+
+
+
+# funtion to post a comment
+def post_a_comment(username):
+    media_id = get_media_id(username)
+    comment_text = raw_input("Your comment: ")
+    payload = {"access_token": APP_ACCESS_TOKEN, "text" : comment_text}
+    request_url = (BASE_URL + 'media/%s/comments') % (media_id)
+    print 'POST request url : %s' % (request_url)
+
+    make_comment = requests.post(request_url, payload).json()
+
+    if make_comment['meta']['code'] == 200:
+        print "Successfully added a new comment!"
+    else:
+      print "Unable to add comment. Try again!"
+
+
+
+
+def start_bot():
+    while True:
+        print '\n'
+        print 'Hey! Welcome to instaBot!'
+        print 'Here are your menu options:'
+        print "a.Get your own details\n"
+        print "b.Get details of a user by username\n"
+        print "c.Get your own recent post\n"
+        print "d.Get the recent post of a user by username\n"
+        print "e.Get a list of people who have liked the recent post of a user\n"
+        print "f.Like the recent post of a user\n"
+        print "g.Get a list of comments on the recent post of a user\n"
+        print "h.Make a comment on the recent post of a user\n"
+        print "i.Exit"
+
+        choice = raw_input("Enter you choice: ")
+        if choice == "a":
+            self_info()
+        elif choice == "b":
+            insta_username = raw_input("Enter the username of the user: ")
+            another_user_detail(insta_username)
+        elif choice == "c":
+            user_recent_post()
+        elif choice == "d":
+            insta_username = raw_input("Enter the username of the user: ")
+            user_recent_media(insta_username)
+        elif choice=="e":
+           insta_username = raw_input("Enter the username of the user: ")
+           people_list(insta_username)
+        elif choice=="f":
+           insta_username = raw_input("Enter the username of the user: ")
+           like_a_post(insta_username)
+        elif choice=="g":
+           insta_username = raw_input("Enter the username of the user: ")
+           get_comments_list(insta_username)
+        elif choice=="h":
+           insta_username = raw_input("Enter the username of the user: ")
+           post_a_comment(insta_username)
+        elif choice == "i":
+            exit()
+        else:
+            print "wrong choice"
+
+
+
+start_bot()
 
 
 
