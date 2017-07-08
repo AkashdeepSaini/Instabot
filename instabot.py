@@ -93,17 +93,21 @@ def user_recent_post():
 # function to get media id from username
 def get_media_id(username):
   user_id=get_user_id(username)
-  request_url=BASE_URL+'users/%s/media/recent/?access_token=%s'%(user_id,APP_ACCESS_TOKEN)
-  user_media = requests.get(request_url).json()
-  if user_media['meta']['code'] == 200:
-    if len(user_media['data']):
-      return user_media['data'][0]['id']
-    else:
-      print 'No recent post'
+  if user_id==None:
+      print 'no such user exists'
       exit()
   else:
-    print 'Status code other than 200 received!'
-    exit()
+     request_url=BASE_URL+'users/%s/media/recent/?access_token=%s'%(user_id,APP_ACCESS_TOKEN)
+     user_media = requests.get(request_url).json()
+     if user_media['meta']['code'] == 200:
+         if len(user_media['data']):
+           return user_media['data'][0]['id']
+         else:
+           print 'No recent post'
+           exit()
+     else:
+       print 'Status code other than 200 received!'
+       exit()
 
 #downloads recent media of a user (self)
 def user_recent_media(username):
@@ -268,9 +272,14 @@ def hash_tag(name_of_tag):
 
 #function to find recently uploaded media having tag entered by the user
 def hash_tag1(name_of_tag):
+
+
   request_url=BASE_URL+'tags/%s/media/recent?access_token=%s' %(name_of_tag,APP_ACCESS_TOKEN)
   info = requests.get(request_url).json()
   if info['meta']['code']==200:
+
+
+
       no_of_images=0
       no_of_videos=0
       other_media=0
@@ -333,30 +342,54 @@ def start_bot():
             self_info()
         elif choice == "b":
             insta_username = raw_input("Enter the username of the user: ")
-            another_user_detail(insta_username)
+            if insta_username=="":
+                print 'enter a valid username'
+            else:
+                another_user_detail(insta_username)
         elif choice == "c":
             user_recent_post()
         elif choice == "d":
             insta_username = raw_input("Enter the username of the user: ")
-            user_recent_media(insta_username)
+            if insta_username=="":
+                print 'enter a valid username'
+            else:
+                user_recent_media(insta_username)
         elif choice=="e":
            insta_username = raw_input("Enter the username of the user: ")
-           people_list(insta_username)
+           if insta_username == "":
+               print 'enter a valid username'
+           else:
+               people_list(insta_username)
         elif choice=="f":
            insta_username = raw_input("Enter the username of the user: ")
-           like_a_post(insta_username)
+           if insta_username == "":
+               print 'enter a valid username'
+           else:
+               like_a_post(insta_username)
         elif choice=="g":
            insta_username = raw_input("Enter the username of the user: ")
-           get_comments_list(insta_username)
+           if insta_username == "":
+               print 'enter a valid username'
+           else:
+               get_comments_list(insta_username)
         elif choice=="h":
            insta_username = raw_input("Enter the username of the user: ")
-           post_a_comment(insta_username)
+           if insta_username == "":
+               print 'enter a valid username'
+           else:
+               post_a_comment(insta_username)
         elif choice=="i":
            hashtag = raw_input("Enter the hashtag: ")
-           hash_tag(hashtag)
+           if hashtag == "":
+               print 'enter a valid tag'
+           else:
+              hash_tag(hashtag)
         elif choice=="j":
             hashtag = raw_input("Enter the hashtag: ")
-            hash_tag1(hashtag)
+            if hashtag=="":
+                print 'enter a valid tag'
+            else:
+              hash_tag1(hashtag)
         elif choice == "k":
             exit()
         else:
