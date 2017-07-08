@@ -1,4 +1,6 @@
 import requests,urllib
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 global APP_ACCESS_TOKEN,BASE_URL
@@ -10,7 +12,7 @@ BASE_URL='https://api.instagram.com/v1/'
 
 def self_info():
   request_url=BASE_URL+'users/self/?access_token=%s' % (APP_ACCESS_TOKEN)
-  print 'GET request url : %s' % (request_url)
+
   user_info = requests.get(request_url).json()
 
   if user_info['meta']['code']==200:
@@ -53,7 +55,7 @@ def another_user_detail(username):
       print "Username not found"
     else:
       request_url = BASE_URL + 'users/%s/?access_token=%s' % (user_id,APP_ACCESS_TOKEN)
-      print 'GET request url : %s' % (request_url)
+
       user_info = requests.get(request_url).json()
       if user_info['meta']['code'] == 200:
         if len(user_info['data']):
@@ -61,7 +63,7 @@ def another_user_detail(username):
           print 'Full Name =%s' % (user_info['data']['full_name'])
           print 'Bio =%s' % (user_info['data']['bio'])
           print 'No. of followers: %s' % (user_info['data']['counts']['followed_by'])
-          print 'No. of people following %s: %s' % ((user_info['data']['full_name']),user_info['data']['counts']['follows'])
+          print 'No. of people %s is following : %s' % ((user_info['data']['full_name']),user_info['data']['counts']['follows'])
           print 'No. of posts: %s' % (user_info['data']['counts']['media'])
         else:
           print 'No data is available for the searched user'
@@ -75,7 +77,7 @@ def another_user_detail(username):
 
 def user_recent_post():
   request_url=BASE_URL+'users/self/media/recent/?access_token=%s' %(APP_ACCESS_TOKEN)
-  print 'GET request url : %s' % (request_url)
+
   user_media = requests.get(request_url).json()
   if user_media['meta']['code'] == 200:
     if len(user_media['data']):
@@ -144,7 +146,7 @@ def like_a_post(username):
     media_id = get_media_id(username)
     request_url = (BASE_URL + 'media/%s/likes') % (media_id)
     payload = {"access_token": APP_ACCESS_TOKEN}
-    print 'POST request url : %s' % (request_url)
+
     post_a_like = requests.post(request_url, payload).json()
     if post_a_like['meta']['code'] == 200:
         print 'Like was successful!'
@@ -222,6 +224,93 @@ def post_a_comment(username):
 
 
 
+# empty list
+hash_tag_name=[]
+count=[]
+
+#function to search media over instagram having similar tags
+def hash_tag(name_of_tag):
+  request_url=BASE_URL+'tags/search?q=%s&access_token=%s' %(name_of_tag,APP_ACCESS_TOKEN)
+  info = requests.get(request_url).json()
+  if info['meta']['code']==200:
+    if len(info['data']):
+       length = len(info['data'])
+       print 'Total no of tags found %s' %(length)
+       i = 0
+       while (length):
+          print "name = %s    count=%s " % (info['data'][i]['name'], info['data'][i]['media_count'])
+          hash_tag_name.append(info['data'][i]['name'])
+          count.append(info['data'][i]['media_count'])
+
+          i = i + 1
+          length = length - 1
+
+
+       tuple(hash_tag_name)
+
+       y_pos = np.arange(len(hash_tag_name))
+
+
+       plt.bar(y_pos, count, align='center', alpha=0.5)
+       plt.xticks(y_pos, hash_tag_name, rotation=90)
+       plt.ylabel('Media Counts')
+       plt.title('Types of media with similar hashtag ')
+       plt.show()
+    else:
+      print "No media with such hashtag is found"
+
+
+  else:
+    print 'Status code other than 200 received!'
+    exit()
+
+
+
+#function to find recently uploaded media having tag entered by the user
+def hash_tag1(name_of_tag):
+  request_url=BASE_URL+'tags/%s/media/recent?access_token=%s' %(name_of_tag,APP_ACCESS_TOKEN)
+  info = requests.get(request_url).json()
+  if info['meta']['code']==200:
+      no_of_images=0
+      no_of_videos=0
+      other_media=0
+      i=0
+      if len(info['data']):
+          total_length=len(info['data'])
+
+          while (total_length):
+              if (info['data'][i]['type']=="image"):
+                 no_of_images=no_of_images+1
+              elif(info['data'][i]['type']=="video"):
+                 no_of_videos=no_of_videos+1
+              else:
+                 other_media=other_media+1
+              total_length=total_length-1
+              i=i+1
+          objects = ('images', 'videos', 'other')
+          # tuple(objects)
+          counts = [no_of_images, no_of_videos, other_media]
+          y_pos = np.arange(len(objects))
+
+          plt.bar(y_pos, counts, align='center', alpha=0.5)
+          plt.xticks(y_pos, objects, rotation=90)
+          plt.ylabel('Media Counts')
+          plt.title("Types of media ")
+          plt.show()
+          print "Total number of images %s" %(no_of_images)
+          print "Total number of videos %s" % (no_of_videos)
+          print "Total number of other media %s" % (other_media)
+      else:
+       print "No media with such hashtag is found"
+
+
+  else:
+     print 'Status code other than 200 received!'
+     exit()
+
+
+
+
 def start_bot():
     while True:
         print '\n'
@@ -235,9 +324,11 @@ def start_bot():
         print "f.Like the recent post of a user\n"
         print "g.Get a list of comments on the recent post of a user\n"
         print "h.Make a comment on the recent post of a user\n"
-        print "i.Exit"
+        print "i.To generate bar graph depicting media having similar hashtag\n"
+        print "j.To generate bar graph depicting types of media(recently added) having enetered  hashtag\n"
+        print "k.Exit"
 
-        choice = raw_input("Enter you choice: ")
+        choice = raw_input("Enter your choice: ")
         if choice == "a":
             self_info()
         elif choice == "b":
@@ -260,7 +351,13 @@ def start_bot():
         elif choice=="h":
            insta_username = raw_input("Enter the username of the user: ")
            post_a_comment(insta_username)
-        elif choice == "i":
+        elif choice=="i":
+           hashtag = raw_input("Enter the hashtag: ")
+           hash_tag(hashtag)
+        elif choice=="j":
+            hashtag = raw_input("Enter the hashtag: ")
+            hash_tag1(hashtag)
+        elif choice == "k":
             exit()
         else:
             print "wrong choice"
