@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 global APP_ACCESS_TOKEN,BASE_URL
-APP_ACCESS_TOKEN='5689237295.0705f6a.21cd24d2701a46a5a625358c35071320'
+
 BASE_URL='https://api.instagram.com/v1/'
 
 
